@@ -1,4 +1,3 @@
-// src/components/AddTaskForm.jsx
 import React, { useState } from 'react';
 
 const AddTaskForm = ({ columnId, onAddTask }) => {
@@ -8,20 +7,18 @@ const AddTaskForm = ({ columnId, onAddTask }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim()) {
-      setIsEditing(false); // Esconde se estiver vazio e submeter
+      setIsEditing(false);
       return;
     }
-    onAddTask(title.trim(), columnId); // Chama a função passada por Column.jsx
+    onAddTask(title.trim(), columnId);
     setTitle('');
-    // Mantém o formulário aberto para adicionar mais tarefas rapidamente, se desejar
-    // Para fechar após adicionar, descomente a linha abaixo:
-    // setIsEditing(false); 
+    setIsEditing(false);
   };
 
   if (!isEditing) {
     return (
       <button 
-        className="add-task-button open-form" 
+        className="btn btn-subtle" 
         onClick={() => setIsEditing(true)}
       >
         + Adicionar um cartão
@@ -36,12 +33,12 @@ const AddTaskForm = ({ columnId, onAddTask }) => {
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Insira um título para este cartão..."
         autoFocus
-        onBlur={() => { if(!title.trim()) setIsEditing(false);}} // Fecha se clicar fora e estiver vazio
+        onBlur={() => { if(!title.trim()) setIsEditing(false);}}
         className="add-task-textarea"
-        rows="3" // Ajuste conforme necessário
+        rows="3"
       />
       <div className="add-task-controls">
-        <button type="submit" className="add-task-submit">
+        <button type="submit" className="btn btn-success">
           Adicionar Cartão
         </button>
         <button 

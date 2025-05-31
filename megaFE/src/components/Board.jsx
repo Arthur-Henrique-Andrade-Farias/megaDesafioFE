@@ -1,8 +1,8 @@
-// src/components/Board.jsx
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Column from './Column';
-import AddColumnForm from './AddColumnForm';
 import TaskDetailModal from './TaskDetailModal';
+import BoardFilters from './BoardFilters';
+import { useTarefas } from '../../../../Mega-Grupo-5-Web/src/hooks/useTarefa';
 import {
   DndContext,
   closestCorners,
@@ -10,242 +10,240 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { DONE_COLUMN_ID, TODO_COLUMN_ID } from './constants'; // Importando IDs conhecidos
+import Task from './Task';
 
-// Dados Iniciais (com description, priority, createdAt, dueDate)
-const initialData = {
-  tasks: {
-    'task-1': { id: 'task-1', title: 'Configurar ambiente', description: 'Instalar Node, Yarn, configurar VSCode.', priority: 'high', createdAt: '2024-05-26T10:00:00Z', dueDate: '2024-06-10' },
-    'task-2': { id: 'task-2', title: 'Estrutura de componentes', description: 'Definir componentes: Board, Column, Task.', priority: 'high', createdAt: '2024-05-27T11:00:00Z', dueDate: '2024-06-15' },
-    'task-3': { id: 'task-3', title: 'Layout Board', description: 'CSS Flexbox para o quadro.', priority: 'medium', createdAt: '2024-05-28T09:30:00Z', dueDate: null },
-    'task-4': { id: 'task-4', title: 'Implementar Dnd Kit', description: 'Arrastar e soltar tarefas.', priority: 'high', createdAt: '2024-05-28T14:00:00Z', dueDate: '2024-06-20' },
-    'task-5': { id: 'task-5', title: 'Estilizar colunas/tarefas', description: 'Visual Trello-like.', priority: 'medium', createdAt: '2024-05-29T16:00:00Z', dueDate: null },
-    'task-6': { id: 'task-6', title: 'Nova Coluna Feature', description: 'Criar colunas dinamicamente.', priority: 'low', createdAt: '2024-05-30T08:00:00Z', dueDate: '2024-07-01' },
-    'task-7': { id: 'task-7', title: 'Modal de Tarefa', description: 'Edição de título, descrição, etc.', priority: 'high', createdAt: '2024-05-30T10:00:00Z', dueDate: '2024-06-25' },
-    'task-8': { id: 'task-8', title: 'Testes Finais', description: 'Testar tudo.', priority: 'medium', createdAt: '2024-05-31T15:00:00Z', dueDate: null },
-  },
-  columns: {
-    'col-1': { id: 'col-1', title: 'Backlog', taskIds: ['task-1', 'task-2'] },
-    'col-2': { id: 'col-2', title: 'To Do', taskIds: ['task-3', 'task-4'] },
-    'col-3': { id: 'col-3', title: 'Doing', taskIds: ['task-5', 'task-6', 'task-7'] },
-    'col-4': { id: 'col-4', title: 'Done', taskIds: ['task-8'] },
-    'col-5': { id: 'col-5', title: 'Canceled', taskIds: [] },
-  },
-  columnOrder: ['col-1', 'col-2', 'col-3', 'col-4', 'col-5'],
+const priorityStringToNumber = (priorityStr) => {
+  if (priorityStr === 'high') return 1;
+  if (priorityStr === 'medium') return 2;
+  if (priorityStr === 'low') return 3;
+  return 2;
+};
+
+const priorityNumberToString = (priorityNum) => {
+  if (priorityNum === 1) return 'high';
+  if (priorityNum === 2) return 'medium';
+  if (priorityNum === 3) return 'low';
+  return 'medium';
 };
 
 const Board = () => {
-  const [boardData, setBoardData] = useState(initialData);
+  const {
+    tarefas,
+    error: hookError,
+    handleSubmit,
+    handleDelete,
+    MudaCheckTarefa,
+    modoEdit,
+    aplicarFiltros,
+    limparFiltros,
+    agruparState,
+  } = useTarefas();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
+  const [currentTaskForModal, setCurrentTaskForModal] = useState(null);
+  const [formStateForHook, setFormStateForHook] = useState({
+    titulo: '',
+    descricao: '',
+    prioridade: 2,
+    date: '',
+    state: 'To Do',
+    check: false,
+  });
+
+  const [uiFilters, setUiFilters] = useState({
+    titulo: '',
+    prioridade: 'all',
+    data: '',
+    ordenar: 'padrao',
+  });
+  const [showFiltersUI, setShowFiltersUI] = useState(false);
+  const [activeDraggedTask, setActiveDraggedTask] = useState(null);
+
+  const processedBoardData = useMemo(() => {
+    if (!tarefas) return { columns: {}, columnOrder: [] };
+    const groupedTasks = agruparState(tarefas);
+    const columnOrder = Object.keys(groupedTasks);
+    return { columns: groupedTasks, columnOrder };
+  }, [tarefas, agruparState]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const handleAddColumn = (title) => {
-    const newColumnId = 'col-' + Date.now(); // ID único simples
-    const newColumn = {
-      id: newColumnId,
-      title,
-      taskIds: [],
+  const handleOpenModalForNew = (initialTitle = '', columnState = 'To Do') => {
+    setCurrentTaskForModal(null);
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const newFormData = {
+      id: undefined,
+      titulo: initialTitle,
+      descricao: '',
+      prioridade: 2,
+      date: now.toISOString().slice(0, 16),
+      state: columnState,
+      check: false,
     };
-    setBoardData(prevData => ({
-      ...prevData,
-      columns: { ...prevData.columns, [newColumnId]: newColumn },
-      columnOrder: [...prevData.columnOrder, newColumnId],
-    }));
+    setFormStateForHook(newFormData);
+    modoEdit(newFormData, setFormStateForHook);
+    setIsModalOpen(true);
   };
-
-  const handleAddNewTask = (title, columnId) => {
-    const newTaskId = 'task-' + Date.now();
-    const newTask = {
-      id: newTaskId,
-      title,
-      description: '',
-      priority: 'medium',
-      createdAt: new Date().toISOString(),
-      dueDate: null,
-    };
-    setBoardData(prevData => ({
-      ...prevData,
-      tasks: { ...prevData.tasks, [newTaskId]: newTask },
-      columns: {
-        ...prevData.columns,
-        [columnId]: {
-          ...prevData.columns[columnId],
-          taskIds: [...prevData.columns[columnId].taskIds, newTaskId],
-        },
-      },
-    }));
-  };
-
-  const findColumnIdForTask = (taskId, columns) => {
-    return Object.keys(columns).find(columnId => columns[columnId].taskIds.includes(taskId));
-  };
-
-  const onDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over) return;
-    const activeId = String(active.id);
-    const overId = String(over.id);
-
-    if (activeId === overId && !boardData.columns[overId]) return;
-
-    setBoardData((prev) => {
-      const newBoardData = JSON.parse(JSON.stringify(prev));
-      const { columns, tasks } = newBoardData;
-      const activeColumnId = findColumnIdForTask(activeId, columns);
-      const overIsAColumnItself = !!columns[overId];
-      const overIsATask = !!tasks[overId];
-      let overColumnId = overIsAColumnItself ? overId : (overIsATask ? findColumnIdForTask(overId, columns) : null);
-
-      if (!activeColumnId || !overColumnId) {
-        console.warn("DND: Coluna de origem ou destino não identificada.", { activeId, overId, activeColumnId, overColumnId });
-        return prev;
-      }
-      
-      const activeCol = columns[activeColumnId];
-      const destCol = columns[overColumnId];
-
-      if (activeColumnId === overColumnId) { // Reordenar na mesma coluna
-        const oldIndex = activeCol.taskIds.indexOf(activeId);
-        let newIndex = overIsATask ? destCol.taskIds.indexOf(overId) : destCol.taskIds.length;
-        if (oldIndex !== -1 && newIndex !== -1) {
-          activeCol.taskIds = arrayMove(activeCol.taskIds, oldIndex, newIndex);
-        }
-      } else { // Mover para coluna diferente
-        const oldIndexInSource = activeCol.taskIds.indexOf(activeId);
-        if (oldIndexInSource > -1) {
-          activeCol.taskIds.splice(oldIndexInSource, 1);
-        }
-        let newIndexInDest = overIsATask ? destCol.taskIds.indexOf(overId) : destCol.taskIds.length;
-        destCol.taskIds.splice(newIndexInDest, 0, activeId);
-      }
-      return newBoardData;
-    });
-  };
-
-  const handleOpenTaskModal = (taskIdToEdit) => {
-    const taskToEdit = boardData.tasks[taskIdToEdit];
-    if (taskToEdit) {
-      setEditingTask(taskToEdit);
-      setIsModalOpen(true);
-    }
+  
+  const handleOpenModalForEdit = (taskFromApi) => {
+    setCurrentTaskForModal(taskFromApi);
+    modoEdit(taskFromApi, setFormStateForHook);
+    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setEditingTask(null);
+    setCurrentTaskForModal(null);
   };
 
-  const handleSaveTaskTitle = (taskId, newTitle) => {
-    setBoardData(prev => ({ ...prev, tasks: { ...prev.tasks, [taskId]: { ...prev.tasks[taskId], title: newTitle }}}));
+  const handleSaveTaskFromModal = async (formDataFromModal) => {
+    await handleSubmit(formDataFromModal, setFormStateForHook);
+    handleCloseModal();
   };
 
-  const handleSaveTaskDescription = (taskId, newDescription) => {
-    setBoardData(prev => ({ ...prev, tasks: { ...prev.tasks, [taskId]: { ...prev.tasks[taskId], description: newDescription }}}));
+  const handleToggleTaskCheck = async (taskFromApi) => {
+    await MudaCheckTarefa(taskFromApi);
   };
 
-  const handleSaveTaskPriority = (taskId, newPriority) => {
-    setBoardData(prev => ({ ...prev, tasks: { ...prev.tasks, [taskId]: { ...prev.tasks[taskId], priority: newPriority }}}));
-  };
-
-  const handleSaveTaskDueDate = (taskId, newDueDate) => {
-    setBoardData(prev => ({ ...prev, tasks: { ...prev.tasks, [taskId]: { ...prev.tasks[taskId], dueDate: newDueDate }}}));
+  const handleDeleteTaskWithConfirmation = async (taskId) => {
+    if (window.confirm('Tem certeza que deseja deletar esta tarefa?')) {
+      await handleDelete(taskId);
+    }
   };
   
-  const handleToggleTaskDone = (taskId, isCurrentlyDone) => {
-    setBoardData(prevData => {
-      const newBoardState = JSON.parse(JSON.stringify(prevData));
-      const { columns } = newBoardState;
-      const currentColumnId = findColumnIdForTask(taskId, columns);
-      if (!currentColumnId) return prevData;
-      const targetColumnId = isCurrentlyDone ? TODO_COLUMN_ID : DONE_COLUMN_ID;
-
-      if (currentColumnId === targetColumnId || !columns[targetColumnId]) return prevData;
-      if (columns[currentColumnId]) {
-        columns[currentColumnId].taskIds = columns[currentColumnId].taskIds.filter(id => id !== taskId);
-      }
-      if (!columns[targetColumnId].taskIds.includes(taskId)) {
-          columns[targetColumnId].taskIds.push(taskId);
-      }
-      return newBoardState;
-    });
+  const onDragStart = (event) => {
+    const task = tarefas.find(t => String(t.id) === String(event.active.id));
+    setActiveDraggedTask(task);
   };
 
-  const handleChangeTaskColumnInModal = (taskId, oldColumnIdFromModal, newColumnId) => {
-    setBoardData(prevData => {
-      const task = prevData.tasks[taskId];
-      if (!task) return prevData;
-      const actualOldColumnId = findColumnIdForTask(taskId, prevData.columns);
-      if (!newColumnId || actualOldColumnId === newColumnId) return prevData;
+  const onDragEnd = async (event) => {
+    setActiveDraggedTask(null);
+    const { active, over } = event;
+    if (!over || !active) return;
 
-      const newBoardState = JSON.parse(JSON.stringify(prevData));
-      if (actualOldColumnId && newBoardState.columns[actualOldColumnId]) {
-        newBoardState.columns[actualOldColumnId].taskIds =
-          newBoardState.columns[actualOldColumnId].taskIds.filter(id => id !== taskId);
-      }
-      if (newBoardState.columns[newColumnId] && !newBoardState.columns[newColumnId].taskIds.includes(taskId)) {
-        newBoardState.columns[newColumnId].taskIds.push(taskId);
-      }
-      return newBoardState;
-    });
+    const activeTaskId = Number(active.id);
+    const taskToMove = tarefas.find(t => t.id === activeTaskId);
+    if (!taskToMove) return;
+
+    let newContainerState = String(over.id);
+    if (!processedBoardData.columns[newContainerState]) {
+        const overTask = tarefas.find(t => String(t.id) === String(over.id));
+        if (overTask && processedBoardData.columns[overTask.state]) {
+            newContainerState = overTask.state;
+        } else {
+            return;
+        }
+    }
+    
+    if (taskToMove.state !== newContainerState) {
+      const updatedTaskDataForHook = {
+        ...taskToMove,
+        state: newContainerState,
+      };
+      modoEdit(taskToMove, setFormStateForHook);
+      const finalFormState = { ...formStateForHook, ...updatedTaskDataForHook };
+      setFormStateForHook(finalFormState);
+      await handleSubmit(finalFormState, setFormStateForHook);
+    }
   };
+  
+  const handleApplyUiFilters = () => {
+    const apiFilters = {
+        titulo: uiFilters.titulo || undefined,
+        prioridade: uiFilters.prioridade === 'all' ? undefined : priorityStringToNumber(uiFilters.prioridade),
+        data: uiFilters.data || undefined,
+        ordenar: uiFilters.ordenar === 'padrao' ? undefined : uiFilters.ordenar,
+    };
+    aplicarFiltros(apiFilters);
+  };
+
+  const handleClearUiFilters = () => {
+    limparFiltros(setUiFilters);
+  };
+  
+  if (hookError && !tarefas.length) {
+      return <div style={{ padding: '20px', color: 'red', textAlign: 'center' }}>Erro ao carregar tarefas: {hookError}. Verifique se a API está funcionando.</div>;
+  }
 
   return (
     <>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragEnd={onDragEnd}
-      >
+      {hookError && <div style={{position: 'fixed', bottom: '20px', left: '20px', background: 'orange', color: 'black', padding: '10px', borderRadius: '5px', zIndex: 1000}}>Aviso: {hookError}</div>}
+      
+      <div className="board-controls">
+        <button 
+            onClick={() => handleOpenModalForNew('', processedBoardData.columnOrder.length > 1 ? processedBoardData.columnOrder[1] : 'To Do')} 
+            className="btn btn-primary">
+            Adicionar Cartão
+        </button>
+        <button
+          onClick={() => setShowFiltersUI(prev => !prev)}
+          className="btn btn-primary"
+        >
+          {showFiltersUI ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+        </button>
+      </div>
+
+      {showFiltersUI && (
+        <BoardFilters
+          priorityFilter={uiFilters.prioridade}
+          onPriorityFilterChange={(value) => setUiFilters(prev => ({ ...prev, prioridade: value }))}
+          sortCriteria={uiFilters.ordenar}
+          onSortChange={(value) => setUiFilters(prev => ({ ...prev, ordenar: value }))}
+          searchTerm={uiFilters.titulo}
+          onSearchTermChange={(value) => setUiFilters(prev => ({ ...prev, titulo: value }))}
+          onClearFilters={handleClearUiFilters}
+          onApplyFilters={handleApplyUiFilters}
+        />
+      )}
+
+      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className="board">
-          {boardData.columnOrder.map(columnId => {
-            const column = boardData.columns[columnId];
-            const tasksInColumn = column.taskIds
-              .map(taskId => boardData.tasks[taskId])
-              .filter(Boolean); // Filtra tasks undefined se um ID não existir
+          {(processedBoardData.columnOrder || []).map(columnStateKey => {
+            const tasksInColumn = processedBoardData.columns[columnStateKey];
             
             return (
               <Column
-                key={column.id}
-                column={column}
-                tasks={tasksInColumn}
-                onOpenTaskModal={handleOpenTaskModal}
-                onToggleTaskDone={handleToggleTaskDone}
-                onAddNewTask={handleAddNewTask}
+                key={columnStateKey}
+                column={{ id: columnStateKey, title: columnStateKey }}
+                tasks={tasksInColumn || []}
+                onOpenTaskModal={handleOpenModalForEdit}
+                onToggleTaskDone={handleToggleTaskCheck}
+                onAddNewTask={handleOpenModalForNew}
               />
             );
           })}
-          <AddColumnForm onAddColumn={handleAddColumn} />
         </div>
+        <DragOverlay>{activeDraggedTask ? <Task task={activeDraggedTask} /> : null}</DragOverlay>
       </DndContext>
 
-      {isModalOpen && editingTask && (
+      {isModalOpen && (
         <TaskDetailModal
-          task={editingTask}
-          allColumns={boardData.columns}
-          columnOrder={boardData.columnOrder}
+          task={currentTaskForModal ? {
+                id: currentTaskForModal.id,
+                title: formStateForHook.titulo,
+                description: formStateForHook.descricao,
+                priority: priorityNumberToString(formStateForHook.prioridade),
+                dueDate: formStateForHook.date,
+                state: formStateForHook.state,
+                check: formStateForHook.check ?? currentTaskForModal.check,
+            } : null}
+          
+          initialTitle={!currentTaskForModal ? formStateForHook.titulo : undefined}
+          initialState={!currentTaskForModal ? formStateForHook.state : undefined}
+          
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          onSaveTitle={handleSaveTaskTitle}
-          onSaveDescription={handleSaveTaskDescription} 
-          onSavePriority={handleSaveTaskPriority}       
-          onChangeColumn={handleChangeTaskColumnInModal}
-          onSaveDueDate={handleSaveTaskDueDate}
+          onSaveTask={handleSaveTaskFromModal}
+          fixedColumnStates={processedBoardData.columnOrder && processedBoardData.columnOrder.length > 0 ? processedBoardData.columnOrder : ['Backlog', 'To Do', 'Doing', 'Done', 'Stopped']}
         />
       )}
     </>

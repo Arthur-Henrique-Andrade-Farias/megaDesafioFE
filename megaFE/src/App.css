@@ -1,3 +1,4 @@
+/* src/App.css */
 body {
   font-family: 'Arial', sans-serif;
   background-color: #f4f5f7;
@@ -28,7 +29,66 @@ body {
   font-size: 1.5em;
 }
 
+/* Estilos Base para Botões */
+.btn {
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: bold;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  text-align: center;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Botão Primário (Azul - ex: Ações principais, Adicionar) */
+.btn-primary {
+  background-color: #0079bf;
+  color: white;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: #026aa7;
+}
+
+/* Botão de Sucesso (Verde - ex: Salvar, Adicionar Cartão no formulário) */
+.btn-success {
+  background-color: #5aac44;
+  color: white;
+}
+.btn-success:hover:not(:disabled) {
+  background-color: #4a9c3a;
+}
+
+/* Botão Secundário (Cinza/Default - ex: Cancelar, Limpar) */
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+/* Botão Transparente/Sutil (para abrir formulários inline) */
+.btn-subtle {
+  background-color: transparent;
+  color: #5e6c84;
+  padding: 8px 6px;
+  width: 100%;
+  text-align: left;
+}
+.btn-subtle:hover:not(:disabled) {
+  background-color: rgba(9,30,66,.08);
+  color: #172b4d;
+}
+
+
 .logout-button {
+  /* Pode usar .btn e uma variação ou manter customizado */
   background-color: rgba(255, 255, 255, 0.2);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.5);
@@ -39,7 +99,6 @@ body {
   font-weight: bold;
   transition: background-color 0.2s ease;
 }
-
 .logout-button:hover {
   background-color: rgba(255, 255, 255, 0.35);
 }
@@ -50,11 +109,75 @@ body {
   overflow-x: auto;
 }
 
+/* ... outros estilos ... */
+
+.board-controls {
+  margin-bottom: 20px; /* Espaço ABAIXO dos botões de controle */
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.board-filters {
+  display: flex;
+  gap: 15px;
+  padding: 15px;
+  background-color: #ebecf0;
+  border-radius: 5px;
+  flex-wrap: wrap;
+  align-items: center;
+  border: 1px solid #cdd2d8;
+  width: 100%;
+  box-sizing: border-box;
+  /* margin-top: 0;  (removido ou ajustado se .board-controls já tem margin-bottom) */
+  margin-bottom: 20px; /* Espaço ABAIXO da seção de filtros e ANTES das colunas */
+}
+
+/* ... restante do seu App.css ... */
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-size: 0.85em;
+  color: #172b4d;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.filter-select,
+.filter-input {
+  padding: 8px 10px;
+  border-radius: 3px;
+  border: 1px solid #c4c9cc;
+  font-size: 0.9em;
+  background-color: white;
+}
+
+.filter-input {
+  min-width: 180px;
+}
+
+.filter-select {
+  min-width: 160px;
+}
+
+.filter-group-buttons {
+  display: flex;
+  gap: 10px;
+  margin-left: auto; /* Empurra para a direita */
+}
+/* clear-filters-button e apply-filters-button usarão .btn e variações */
+
+
 .board {
   display: inline-flex;
   gap: 10px;
   align-items: flex-start;
-  min-height: calc(100vh - 150px);
+  min-height: calc(100vh - 220px);
   padding-bottom: 10px;
 }
 
@@ -66,7 +189,7 @@ body {
   padding: 8px;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 180px);
+  max-height: calc(100vh - 250px);
 }
 
 .column-title {
@@ -81,19 +204,17 @@ body {
   flex-grow: 1;
   min-height: 20px;
   overflow-y: auto;
-  padding: 4px; /* Adicionado padding consistente para o placeholder do DND */
+  padding: 4px;
   border-radius: 3px;
 }
 
 .task-list::-webkit-scrollbar {
   width: 8px;
 }
-
 .task-list::-webkit-scrollbar-thumb {
   background-color: #c4c9cc;
   border-radius: 4px;
 }
-
 .task-list::-webkit-scrollbar-track {
   background-color: #dfe1e6;
   border-radius: 4px;
@@ -105,12 +226,10 @@ body {
   margin-bottom: 8px;
   box-shadow: 0 1px 0 rgba(9,30,66,.25);
 }
-
 .task-card-container:hover {
   background-color: #f4f5f7;
 }
-
-.task-card-container.is-dragging-dndkit { /* Note que o is-dragging-dndkit foi para o container */
+.task-card-container.is-dragging-dndkit {
   opacity: 0.8;
   box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
@@ -121,7 +240,6 @@ body {
   padding: 8px 10px;
   cursor: grab;
 }
-
 .task-card-content p {
   margin: 0 0 0 8px;
   flex-grow: 1;
@@ -129,7 +247,6 @@ body {
   word-wrap: break-word;
   font-size: 0.9em;
 }
-
 .task-checkbox {
   margin-right: 8px;
   cursor: pointer;
@@ -154,11 +271,9 @@ body {
   text-align: left;
   transition: background-color 0.2s ease;
 }
-
 .add-column-button.open-form:hover {
   background-color: hsla(0,0%,100%,.34);
 }
-
 .add-column-form {
   background-color: #ebecf0;
   border-radius: 3px;
@@ -166,7 +281,6 @@ body {
   min-width: 272px;
   height: fit-content;
 }
-
 .add-column-input {
   width: 100%;
   padding: 8px 10px;
@@ -175,24 +289,9 @@ body {
   border: 1px solid #ccc;
   box-sizing: border-box;
 }
-
 .add-column-controls {
   display: flex;
   align-items: center;
-}
-
-.add-column-submit {
-  background-color: #0079bf;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 3px;
-  cursor: pointer;
-  margin-right: 8px;
-}
-
-.add-column-submit:hover {
-  background-color: #026aa7;
 }
 
 .add-column-cancel {
@@ -203,220 +302,16 @@ body {
   cursor: pointer;
   padding: 0 4px;
 }
-
 .add-column-cancel:hover {
   color: #172b4d;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-content {
-  background-color: white;
-  padding: 25px 30px;
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  width: 90%;
-  max-width: 550px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-close-button {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  background: none;
-  border: none;
-  font-size: 1.8em;
-  line-height: 1;
-  cursor: pointer;
-  color: #6b778c;
-  padding: 5px;
-}
-.modal-close-button:hover {
-  color: #172b4d;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  text-align: center;
-  color: #172b4d;
-  font-size: 1.5em;
-}
-
-.modal-content label {
-  font-size: 0.9em;
-  color: #5e6c84;
-  margin-bottom: 5px;
-  display: block;
-  font-weight: bold;
-}
-
-.modal-content input[type="text"],
-.modal-content input[type="date"],
-.modal-content textarea,
-.modal-content select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 3px;
-  border: 1px solid #dfe1e6;
-  box-sizing: border-box;
-  font-size: 1em;
-  font-family: inherit;
-  background-color: #fafbfc;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.modal-content input[type="text"]:focus,
-.modal-content input[type="date"]:focus,
-.modal-content textarea:focus,
-.modal-content select:focus {
-  background-color: white;
-  border-color: #4c9aff;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(76,154,255,0.3);
-}
-
-.modal-content textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.modal-actions button {
-  padding: 10px 18px;
-  border-radius: 3px;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 0.95em;
-  transition: background-color 0.2s ease;
-}
-
-.modal-save {
-  background-color: #5aac44;
-  color: white;
-}
-.modal-save:hover {
-  background-color: #4a9c3a;
-}
-
-.modal-cancel {
-  background-color: #f4f5f7;
-  color: #172b4d;
-}
-.modal-cancel:hover {
-  background-color: #dfe1e6;
-}
-
-.modal-read-only-field {
-  background-color: #f4f5f7;
-  padding: 10px 12px;
-  border-radius: 3px;
-  border: 1px solid #dfe1e6;
-  font-size: 1em;
-  color: #5e6c84;
-  min-height: 40px; 
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  word-break: break-word; /* Para datas longas ou formatadas */
-}
-
-.modal-row {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-}
-
-.modal-field-group {
-  flex: 1;
-  min-width: 0;
-}
-
-.modal-row {
-  display: flex;
-  gap: 20px; /* Espaço entre os grupos de campo na mesma linha */
-  align-items: flex-start; /* Alinha os labels no topo se os campos tiverem alturas diferentes */
-  margin-bottom: 15px; /* Espaço abaixo da linha de campos */
-}
-
-.modal-field-group {
-  flex: 1; /* Permite que os grupos de campo dividam o espaço igualmente */
-  min-width: 0; /* Ajuda no comportamento do flex em alguns navegadores */
-  display: flex;
-  flex-direction: column; /* Label acima do campo */
-  gap: 5px; /* Espaço entre label e campo */
-}
-
-/* Garanta que o input de data e o campo de texto só leitura ocupem a largura */
-.modal-content input[type="date"],
-.modal-read-only-field {
-  width: 100%; /* Ocupa a largura do .modal-field-group */
-  box-sizing: border-box; /* Importante para padding não estourar a largura */
-}
-
-/* Estilo para o campo de data de criação (somente leitura) */
-.modal-read-only-field {
-  background-color: #f4f5f7;
-  padding: 10px 12px;
-  border-radius: 3px;
-  border: 1px solid #dfe1e6;
-  font-size: 1em;
-  color: #5e6c84;
-  min-height: 40px; /* Altura similar aos inputs para alinhamento visual */
-  display: flex;
-  align-items: center;
-  word-break: break-word;
-  margin-top: 0px;
-}
-
-.add-task-button.open-form {
-  background-color: transparent;
-  color: #5e6c84;
-  border: none;
-  border-radius: 3px;
-  padding: 8px 6px;
-  cursor: pointer;
-  width: 100%;
-  margin-top: 8px;
-  text-align: left;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-.add-task-button.open-form:hover {
-  background-color: rgba(9,30,66,.08);
-  color: #172b4d;
-}
 
 .add-task-form {
   border-radius: 3px;
   padding-top: 4px;
   margin-top: 8px;
 }
-
 .add-task-textarea {
   width: 100%;
   padding: 8px 10px;
@@ -434,25 +329,9 @@ body {
   outline: none;
   box-shadow: 0 0 0 2px rgba(76,154,255,0.3);
 }
-
 .add-task-controls {
   display: flex;
   align-items: center;
-}
-
-.add-task-submit {
-  background-color: #5aac44; /* Verde */
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 3px;
-  cursor: pointer;
-  margin-right: 8px;
-  font-size: 0.9em;
-  font-weight: bold;
-}
-.add-task-submit:hover {
-  background-color: #4a9c3a;
 }
 
 .add-task-cancel {
@@ -467,3 +346,192 @@ body {
 .add-task-cancel:hover {
   color: #172b4d;
 }
+
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.modal-content {
+  background-color: white;
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  width: 90%;
+  max-width: 550px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.8em;
+  line-height: 1;
+  cursor: pointer;
+  color: #6b778c;
+  padding: 5px;
+}
+.modal-close-button:hover {
+  color: #172b4d;
+}
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+  color: #172b4d;
+  font-size: 1.5em;
+}
+.modal-content label {
+  font-size: 0.9em;
+  color: #5e6c84;
+  margin-bottom: 5px;
+  display: block;
+  font-weight: bold;
+}
+.modal-content input[type="text"],
+.modal-content input[type="date"],
+.modal-content input[type="datetime-local"], /* Adicionado datetime-local */
+.modal-content textarea,
+.modal-content select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 3px;
+  border: 1px solid #dfe1e6;
+  box-sizing: border-box;
+  font-size: 1em;
+  font-family: inherit;
+  background-color: #fafbfc;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.modal-content input[type="text"]:focus,
+.modal-content input[type="date"]:focus,
+.modal-content input[type="datetime-local"]:focus, /* Adicionado datetime-local */
+.modal-content textarea:focus,
+.modal-content select:focus {
+  background-color: white;
+  border-color: #4c9aff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(76,154,255,0.3);
+}
+.modal-content textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.modal-actions button {
+  /* Usará .btn e variações */
+  font-size: 0.95em; /* Mantém o tamanho específico se necessário */
+}
+
+
+.modal-read-only-field {
+  background-color: #f4f5f7;
+  padding: 10px 12px;
+  border-radius: 3px;
+  border: 1px solid #dfe1e6;
+  font-size: 1em;
+  color: #5e6c84;
+  min-height: 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  word-break: break-word;
+}
+.modal-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+.modal-field-group {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.modal-content input[type="datetime-local"],
+.modal-read-only-field {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f0f2f5;
+  font-family: Arial, sans-serif;
+}
+
+.auth-form-card {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.auth-form-card h2 {
+  margin-bottom: 25px;
+  color: #333;
+}
+
+.auth-input-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.auth-input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+  font-weight: bold;
+}
+
+.auth-input {
+  width: calc(100% - 20px);
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.auth-input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.auth-error-message {
+  color: #dc3545;
+  font-size: 0.9em;
+  margin-top: -10px;
+  margin-bottom: 15px;
+}
+
+/* auth-button usará .btn e .btn-primary */
